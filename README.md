@@ -17,18 +17,19 @@ Exemplo de configuração para subir o ambiente de desenvolvimento do GDS VBE AP
 
 O arquivo app/.env deve conter as seguintes variáveis:
 
-| Variável                  | Descrição                                      | Exemplo         |
-| ------------------------- | ---------------------------------------------- | --------------- |
-| INTEGRACAO_DB_HOST        | Host do banco de dados da integração           | integracaodb    |
-| INTEGRACAO_DB_PORT        | Porta do banco de dados da integração          | 5432            |
-| INTEGRACAO_DB_USERNAME    | Usuário do banco de dados da integração        | example         |
-| INTEGRACAO_DB_PASSWORD    | Senha do banco de dados da integração          | admin           |
-| INTEGRACAO_DB_SCHEMA_NAME | Nome do schema do banco de dados da integração | integracao      |
-| ODOO_URL                  | URL do Odoo                                    | https://example |
-| ODOO_DB                   | Nome do banco de dados do Odoo                 | test            |
-| ODOO_USER                 | Usuário do Odoo                                | example         |
-| ODOO_APIKEY               | Chave de API do Odoo                           | supersecretkey  |
-| LOGZIO_TOKEN              | Token de autenticação do Logz.io               | tokenenviologs  |
+| Variável                  | Descrição                                      | Exemplo                                |
+| ------------------------- | ---------------------------------------------- | -------------------------------------- |
+| INTEGRACAO_DB_HOST        | Host do banco de dados da integração           | integracaodb                           |
+| INTEGRACAO_DB_PORT        | Porta do banco de dados da integração          | 5432                                   |
+| INTEGRACAO_DB_USERNAME    | Usuário do banco de dados da integração        | example                                |
+| INTEGRACAO_DB_PASSWORD    | Senha do banco de dados da integração          | admin                                  |
+| INTEGRACAO_DB_SCHEMA_NAME | Nome do schema do banco de dados da integração | integracao                             |
+| ODOO_URL                  | URL do Odoo                                    | https://example                        |
+| ODOO_DB                   | Nome do banco de dados do Odoo                 | test                                   |
+| ODOO_USER                 | Usuário do Odoo                                | example                                |
+| ODOO_APIKEY               | Chave de API do Odoo                           | supersecretkey                         |
+| LOGZIO_TOKEN              | Token de autenticação do Logz.io               | tokenenviologs                         |
+| JVM_OPTIONS               | Opções de inicialização da JVM                 | -Xmx512m -Dspring.profiles.active=prod |
 
 O arquivo db/.env deve conter as seguintes variáveis:
 
