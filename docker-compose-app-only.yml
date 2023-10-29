@@ -1,0 +1,17 @@
+version: "3"
+
+services:
+  integracaoapp:
+    image: gleytonlima/gds-ephem-integracao
+    container_name: integracao-app
+    env_file:
+      - app/.env
+    ports:
+      - "8080:8080"
+    expose:
+      - "8080"
+
+networks:
+  default:
+    external:
+      name: ephem-deploy-example_default
