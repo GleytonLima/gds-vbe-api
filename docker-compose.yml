@@ -10,7 +10,8 @@ services:
       - db/.env
     ports:
       - "5432:5432"
-  integracaoapp:
+  integracaoapp:  
+    hostname: gds-integracao-container
     image: gleytonlima/gds-ephem-integracao
     container_name: integracao-app
     env_file:
