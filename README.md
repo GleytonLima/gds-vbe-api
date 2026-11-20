@@ -99,6 +99,7 @@ As variáveis de `app/.env.cv`, além das da tabela acima, são estas:
 | EPHEM_V2_API_KEY            | API key de um usuário com a role `ephem_signals_api_writer` |                             |
 | EPHEM_V2_EXTERNAL_ID_PREFIX | Prefixo do external_id (único por instância)                | GDS-                        |
 | NOTIFYEVENTS_CHANNEL_URL    | Canal de alertas (use um próprio da instância)              |                             |
+| PAPERTRAIL_HOST / _PORT     | Destino de log do profile `prod`; sem elas a aplicação não sobe | (as mesmas do `app/.env`) |
 
 Para voltar só a instância CV a uma versão anterior (a imagem também é publicada com o SHA do commit):
 

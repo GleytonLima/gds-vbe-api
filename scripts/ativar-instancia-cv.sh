@@ -87,7 +87,11 @@ else
     echo "EPHEM_V2_API_KEY=$EPHEM_V2_API_KEY"
     echo "EPHEM_V2_EXTERNAL_ID_PREFIX=$PREFIXO"
     echo "LOGZIO_TOKEN=$(valor LOGZIO_TOKEN app/.env)"
-    echo "JVM_OPTIONS=-Xmx384m"
+    # mesmas opcoes da UnB (ex.: -Dspring.profiles.active=prod), com memoria limitada: sao duas JVMs no host
+    echo "JVM_OPTIONS=-Xmx384m $(valor JVM_OPTIONS app/.env)"
+    # o profile prod envia log ao Papertrail e nao sobe sem essas variaveis
+    echo "PAPERTRAIL_HOST=$(valor PAPERTRAIL_HOST app/.env)"
+    echo "PAPERTRAIL_PORT=$(valor PAPERTRAIL_PORT app/.env)"
     echo "NOTIFYEVENTS_CHANNEL_URL=$NOTIFY"
   } > app/.env.cv
   echo "criado (permissao 600)"
@@ -106,7 +110,9 @@ echo "ok"
 
 echo "== 4/4 subindo integracaoapp-cv"
 docker-compose pull integracaoapp-cv
-docker-compose up -d integracaoapp-cv
+# integracaoapp tambem e recriado: com o arquivo da CV ativo ele ganha VIRTUAL_PATH=/ e, sem isso, o proxy
+# deixa de roteia-lo. A UnB fica fora por alguns segundos. --no-deps: o banco nao e tocado.
+docker-compose up -d --no-deps integracaoapp integracaoapp-cv
 for _ in $(seq 1 60); do
   if docker-compose logs --tail=200 integracaoapp-cv 2>&1 | grep -q 'Started Gds2ephemApplication'; then
     URL_CV="https://$HOST_CV/cv/api-integracao/v1/v2/api-docs"
@@ -122,7 +128,7 @@ for _ in $(seq 1 60); do
     free -m 2>/dev/null | head -2 || true
     exit 0
   fi
-  if docker-compose logs --tail=200 integracaoapp-cv 2>&1 | grep -q 'APPLICATION FAILED TO START'; then
+  if docker-compose logs --tail=200 integracaoapp-cv 2>&1 | grep -qE 'APPLICATION FAILED TO START|Application run failed'; then
     docker-compose logs --tail=60 integracaoapp-cv
     exit 1
   fi
