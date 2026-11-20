@@ -41,6 +41,63 @@ O arquivo db/.env deve conter as seguintes variáveis:
 
 3. Execute o comando `docker-compose up -d` para iniciar o deploy.
 
+## Instância de Cabo Verde (ePHEM API v2)
+
+Cada integrador atende um ePHEM. Para Cabo Verde há uma segunda instância, `integracaoapp-cv`,
+em [docker-compose.cv.yml](docker-compose.cv.yml). Ela usa a mesma imagem e muda só o `env_file`
+(`app/.env.cv`) e o database (`integracao_cv`, no mesmo Postgres).
+
+O serviço fica em arquivo separado para que servidores sem `app/.env.cv` continuem funcionando.
+O deploy do integrador (GitHub Actions) reinicia `integracaoapp-cv` sempre que ele aparece em
+`docker-compose config --services`.
+
+Para ativar num servidor (uma vez):
+
+1. Aponte o DNS de `cv.vbeapi.online` para o servidor. Em produção use `cv.prod.vbeapi.online`.
+2. Crie o database. O `db/initdb.sh` só roda quando o volume é novo:
+   ```sh
+   docker-compose exec integracaodb psql -U postgres -c 'CREATE DATABASE "integracao_cv";'
+   ```
+3. Crie `app/.env.cv` a partir de [app/.env.cv.exemplo](app/.env.cv.exemplo). O
+   `EPHEM_V2_EXTERNAL_ID_PREFIX` precisa ser diferente entre instâncias que publicam no mesmo ePHEM
+   (homologação `GDS-HOMOL-`, produção `GDS-`).
+4. Crie um `.env` na raiz deste repositório. O `docker-compose` lê esse arquivo sozinho:
+   ```sh
+   COMPOSE_FILE=docker-compose.yml:docker-compose.cv.yml
+   # só em produção:
+   INTEGRACAO_CV_HOST=cv.prod.vbeapi.online
+   ```
+5. Suba e acompanhe:
+   ```sh
+   docker-compose pull integracaoapp-cv
+   docker-compose up -d integracaoapp-cv
+   docker-compose logs -f integracaoapp-cv   # esperar "Started Gds2ephemApplication"
+   ```
+
+As variáveis de `app/.env.cv`, além das da tabela acima, são estas:
+
+| Variável                    | Descrição                                                   | Exemplo                     |
+| --------------------------- | ----------------------------------------------------------- | --------------------------- |
+| ODOO_LANG                   | Idioma do context no XML-RPC (precisa estar ativo no Odoo)  | pt_PT                       |
+| EPHEM_V2_ENABLED            | Cria os signals pela API REST v2                            | true                        |
+| EPHEM_V2_BASE_URL           | URL base da API v2                                          | https://cv.pheoc.com/api/v2 |
+| EPHEM_V2_API_KEY            | API key de um usuário com a role `ephem_signals_api_writer` |                             |
+| EPHEM_V2_EXTERNAL_ID_PREFIX | Prefixo do external_id (único por instância)                | GDS-                        |
+| NOTIFYEVENTS_CHANNEL_URL    | Canal de alertas (use um próprio da instância)              |                             |
+
+Para voltar só a instância CV a uma versão anterior (a imagem também é publicada com o SHA do commit):
+
+```sh
+INTEGRACAO_CV_IMAGE_TAG=<sha> docker-compose up -d integracaoapp-cv
+```
+
+O próximo deploy volta a usar `latest`.
+
+Depois de subir a instância, ainda falta configurar o integrador (`configuracao_sistema` e template)
+e o contexto no GDS. Esses passos estão em
+[docs/deploy-instancia-cv.md](https://github.com/GleytonLima/gds-ephem-integracao/blob/main/docs/deploy-instancia-cv.md)
+no repositório do integrador.
+
 ## Como parar
 
 Para parar o deploy, execute o comando `docker-compose down`.

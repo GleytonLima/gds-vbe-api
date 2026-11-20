@@ -1,0 +1,28 @@
+# Instancia do integrador para o ePHEM de Cabo Verde (API REST v2), complementar ao docker-compose.yml.
+# Mesma imagem; muda o env_file (app/.env.cv) e o database (integracao_cv).
+#
+# Fica em arquivo separado para que um servidor sem app/.env.cv continue funcionando. Para ativar,
+# coloque no arquivo .env ao lado deste (lido automaticamente pelo docker-compose):
+#   COMPOSE_FILE=docker-compose.yml:docker-compose.cv.yml
+# O deploy do integrador reinicia integracaoapp-cv sempre que ele aparece em `docker-compose config --services`.
+# Ver a secao "Instancia de Cabo Verde" no README.
+version: "3"
+
+services:
+  integracaoapp-cv:
+    hostname: gds-integracao-cv-container
+    image: gleytonlima/gds-ephem-integracao:${INTEGRACAO_CV_IMAGE_TAG:-latest}
+    container_name: integracao-app-cv
+    restart: unless-stopped
+    depends_on:
+      - integracaodb
+    env_file:
+      - app/.env.cv
+    expose:
+      - "8080"
+    environment:
+      # o DNS deste host precisa apontar para o servidor; o nginx-proxy emite o certificado.
+      # Em producao, defina INTEGRACAO_CV_HOST=cv.prod.vbeapi.online no .env ao lado deste arquivo.
+      VIRTUAL_HOST: ${INTEGRACAO_CV_HOST:-cv.vbeapi.online}
+      LETSENCRYPT_HOST: ${INTEGRACAO_CV_HOST:-cv.vbeapi.online}
+      LETSENCRYPT_EMAIL: gleytonclima@gmail.com

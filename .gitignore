@@ -1,2 +1,5 @@
 db/.env
 app/.env
+app/.env.cv
+# COMPOSE_FILE e variaveis do compose, especificas de cada servidor
+/.env
