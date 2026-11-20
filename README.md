@@ -51,7 +51,11 @@ O serviço fica em arquivo separado para que servidores sem `app/.env.cv` contin
 O deploy do integrador (GitHub Actions) reinicia `integracaoapp-cv` sempre que ele aparece em
 `docker-compose config --services`.
 
-Para ativar num servidor (uma vez), aponte o DNS e rode o script, que cobre os passos 2 a 5 abaixo.
+Ela fica no mesmo host do integrador da UnB, no caminho `/cv/`: a URL a configurar no GDS é
+`https://vbeapi.online/cv` (produção: `https://prod.vbeapi.online/cv`). Não precisa de DNS nem de
+certificado novos, mas o nginx-proxy do servidor precisa ser 1.1 ou mais novo (`VIRTUAL_PATH`).
+
+Para ativar num servidor (uma vez), rode o script, que cobre os passos abaixo.
 Ele pede as keys sem mostrá-las na tela e pode ser rodado de novo:
 
 ```sh
@@ -61,7 +65,10 @@ bash scripts/ativar-instancia-cv.sh homolog   # ou: prod
 
 Os passos que o script executa:
 
-1. Aponte o DNS de `cv.vbeapi.online` para o servidor. Em produção use `cv.prod.vbeapi.online`.
+1. Confere a versão do nginx-proxy:
+   ```sh
+   docker ps --format '{{.Image}} {{.Names}}' | grep -i proxy
+   ```
 2. Crie o database. O `db/initdb.sh` só roda quando o volume é novo:
    ```sh
    docker-compose exec integracaodb psql -U postgres -c 'CREATE DATABASE "integracao_cv";'
@@ -73,7 +80,7 @@ Os passos que o script executa:
    ```sh
    COMPOSE_FILE=docker-compose.yml:docker-compose.cv.yml
    # só em produção:
-   INTEGRACAO_CV_HOST=cv.prod.vbeapi.online
+   INTEGRACAO_CV_HOST=prod.vbeapi.online
    ```
 5. Suba e acompanhe:
    ```sh
