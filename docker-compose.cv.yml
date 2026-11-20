@@ -21,8 +21,11 @@ services:
     expose:
       - "8080"
     environment:
-      # o DNS deste host precisa apontar para o servidor; o nginx-proxy emite o certificado.
-      # Em producao, defina INTEGRACAO_CV_HOST=cv.prod.vbeapi.online no .env ao lado deste arquivo.
-      VIRTUAL_HOST: ${INTEGRACAO_CV_HOST:-cv.vbeapi.online}
-      LETSENCRYPT_HOST: ${INTEGRACAO_CV_HOST:-cv.vbeapi.online}
-      LETSENCRYPT_EMAIL: gleytonclima@gmail.com
+      # Mesmo host do integrador da UnB, no caminho /cv/: https://vbeapi.online/cv/api-integracao/v1/...
+      # O nginx-proxy tira o /cv antes de repassar (VIRTUAL_DEST), entao o integrador nao muda.
+      # Precisa de nginx-proxy 1.1 ou mais novo (suporte a VIRTUAL_PATH). Sem DNS nem certificado novos:
+      # vale o do host, emitido pelo servico integracaoapp.
+      # Em producao, defina INTEGRACAO_CV_HOST=prod.vbeapi.online no .env ao lado deste arquivo.
+      VIRTUAL_HOST: ${INTEGRACAO_CV_HOST:-vbeapi.online}
+      VIRTUAL_PATH: /cv/
+      VIRTUAL_DEST: /

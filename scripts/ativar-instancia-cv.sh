@@ -12,8 +12,8 @@ set -euo pipefail
 
 AMBIENTE="${1:-}"
 case "$AMBIENTE" in
-  homolog) PREFIXO="GDS-HOMOL-"; HOST_CV="cv.vbeapi.online"; EPHEM_URL_PADRAO="https://cv.pheoc.com"; EPHEM_DB_PADRAO="cv" ;;
-  prod)    PREFIXO="GDS-";       HOST_CV="cv.prod.vbeapi.online"; EPHEM_URL_PADRAO=""; EPHEM_DB_PADRAO="" ;;
+  homolog) PREFIXO="GDS-HOMOL-"; HOST_CV="vbeapi.online"; EPHEM_URL_PADRAO="https://cv.pheoc.com"; EPHEM_DB_PADRAO="cv" ;;
+  prod)    PREFIXO="GDS-";       HOST_CV="prod.vbeapi.online"; EPHEM_URL_PADRAO=""; EPHEM_DB_PADRAO="" ;;
   *) echo "uso: bash scripts/ativar-instancia-cv.sh homolog|prod" >&2; exit 1 ;;
 esac
 
@@ -33,6 +33,13 @@ perguntar_segredo() {
   [ -n "$resposta" ] || { echo "$2 e obrigatorio" >&2; exit 1; }
   printf -v "$1" '%s' "$resposta"
 }
+
+echo "== 0/4 nginx-proxy (precisa de VIRTUAL_PATH, versao 1.1+)"
+PROXY_IMAGEM=$(docker ps --format '{{.Image}}' | grep -iE 'nginx-proxy' | head -1 || true)
+echo "imagem do proxy: ${PROXY_IMAGEM:-nao encontrada}"
+case "$PROXY_IMAGEM" in
+  jwilder/*|*:0.*|*:1.0*) echo "este nginx-proxy provavelmente nao suporta VIRTUAL_PATH; atualize-o ou use um subdominio" >&2; exit 1 ;;
+esac
 
 echo "== 1/4 database integracao_cv"
 if docker-compose exec -T integracaodb psql -U postgres -tAc "select 1 from pg_database where datname='integracao_cv'" | grep -q 1; then
@@ -90,7 +97,16 @@ docker-compose pull integracaoapp-cv
 docker-compose up -d integracaoapp-cv
 for _ in $(seq 1 60); do
   if docker-compose logs --tail=200 integracaoapp-cv 2>&1 | grep -q 'Started Gds2ephemApplication'; then
-    echo "integrador CV no ar. Teste: curl -s -o /dev/null -w '%{http_code}' https://$HOST_CV/api-integracao/v1/v2/api-docs"
+    URL_CV="https://$HOST_CV/cv/api-integracao/v1/v2/api-docs"
+    echo "integrador CV no ar; conferindo $URL_CV"
+    for _ in $(seq 1 10); do
+      CODIGO=$(curl -s -o /dev/null -w '%{http_code}' "$URL_CV" || true)
+      [ "$CODIGO" = 200 ] && break
+      sleep 3
+    done
+    echo "HTTP $CODIGO (esperado 200). No GDS, use a URL https://$HOST_CV/cv"
+    UNB=$(curl -s -o /dev/null -w '%{http_code}' "https://$HOST_CV/api-integracao/v1/v2/api-docs" || true)
+    echo "integrador UnB em https://$HOST_CV/api-integracao/v1: HTTP $UNB"
     free -m 2>/dev/null | head -2 || true
     exit 0
   fi
