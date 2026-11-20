@@ -34,12 +34,24 @@ perguntar_segredo() {
   printf -v "$1" '%s' "$resposta"
 }
 
-echo "== 0/4 nginx-proxy (precisa de VIRTUAL_PATH, versao 1.1+)"
+echo "== 0/4 proxy (precisa de suporte a VIRTUAL_PATH e VIRTUAL_DEST)"
 PROXY_IMAGEM=$(docker ps --format '{{.Image}}' | grep -iE 'nginx-proxy' | head -1 || true)
-echo "imagem do proxy: ${PROXY_IMAGEM:-nao encontrada}"
-case "$PROXY_IMAGEM" in
-  jwilder/*|*:0.*|*:1.0*) echo "este nginx-proxy provavelmente nao suporta VIRTUAL_PATH; atualize-o ou use um subdominio" >&2; exit 1 ;;
-esac
+DOCKER_GEN=$(docker ps --format '{{.Names}} {{.Image}}' | awk '/docker-gen/ {print $1; exit}' || true)
+if [ -n "$PROXY_IMAGEM" ]; then
+  echo "nginx-proxy: $PROXY_IMAGEM"
+  case "$PROXY_IMAGEM" in
+    jwilder/*|*:0.*|*:1.0*) echo "este nginx-proxy provavelmente nao suporta VIRTUAL_PATH; atualize-o ou use um subdominio" >&2; exit 1 ;;
+  esac
+elif [ -n "$DOCKER_GEN" ]; then
+  # proxy em containers separados (nginx + docker-gen): o suporte depende do template montado
+  TEMPLATE=$(docker inspect "$DOCKER_GEN" --format '{{range .Mounts}}{{if eq .Destination "/etc/docker-gen/templates/nginx.tmpl"}}{{.Source}}{{end}}{{end}}')
+  echo "docker-gen: $DOCKER_GEN, template: ${TEMPLATE:-nao encontrado}"
+  if [ -z "$TEMPLATE" ] || ! grep -q 'VIRTUAL_DEST' "$TEMPLATE"; then
+    echo "o template do docker-gen nao suporta VIRTUAL_PATH/VIRTUAL_DEST; atualize-o ou use um subdominio" >&2; exit 1
+  fi
+else
+  echo "proxy nao identificado (nem nginx-proxy nem docker-gen); seguindo, confira o teste HTTP no final" >&2
+fi
 
 echo "== 1/4 database integracao_cv"
 if docker-compose exec -T integracaodb psql -U postgres -tAc "select 1 from pg_database where datname='integracao_cv'" | grep -q 1; then

@@ -9,6 +9,13 @@
 version: "3"
 
 services:
+  # Com VIRTUAL_PATH em algum container de um host, o template do proxy so roteia os containers que
+  # tambem tem VIRTUAL_PATH: o integrador da UnB precisa declarar "/" explicitamente ou sai do ar.
+  # So vale quando este arquivo esta ativo (o compose mescla com o docker-compose.yml).
+  integracaoapp:
+    environment:
+      VIRTUAL_PATH: /
+
   integracaoapp-cv:
     hostname: gds-integracao-cv-container
     image: gleytonlima/gds-ephem-integracao:${INTEGRACAO_CV_IMAGE_TAG:-latest}
